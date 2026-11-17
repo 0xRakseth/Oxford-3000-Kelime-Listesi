@@ -229,6 +229,7 @@
   .fc-tab[data-status="karistirdim"][data-active="true"]{ background: var(--c-karistirdim); color:#fff3e6;}
   .fc-tab[data-status="tekrar"][data-active="true"]{ background: var(--c-tekrar); color:#f1eeff;}
   .fc-tab[data-status="all"][data-active="true"]{ background: #d8d2c2; }
+  .fc-tab[data-status="yeni"][data-active="true"]{ background: #e8e2d2; color:#1c2430; }
 
   .fc-topbar{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
   .fc-topbtn{
@@ -7015,6 +7016,7 @@
     { key: "B2", label: "B2" },
   ];
   const STATUSES = [
+    { key: "yeni", label: "İşaretlemediklerim" },
     { key: "all", label: "Hepsi" },
     { key: "bildim", label: "Bildiklerim" },
     { key: "karistirdim", label: "Karıştırdıklarım" },
@@ -7030,7 +7032,7 @@
 
   let state = {
     level: "all",
-    statusFilter: "all",
+    statusFilter: "yeni",
     search: "",
     status: {},      // id -> 'bildim' | 'karistirdim' | 'tekrar'
     deckIds: [],
@@ -7049,17 +7051,17 @@
   function computeDeckIds(){
     return WORDS
       .filter(w => state.level === "all" || w.level === state.level)
-      .filter(w => state.statusFilter === "all" || state.status[w.id] === state.statusFilter)
+      .filter(w => state.statusFilter === "all" || (state.statusFilter === "yeni" ? !state.status[w.id] : state.status[w.id] === state.statusFilter))
       .filter(matchesSearch)
       .map(w => w.id);
   }
 
   function counts(){
     const inLevel = WORDS.filter(w => state.level === "all" || w.level === state.level);
-    const c = { all: inLevel.length, bildim: 0, karistirdim: 0, tekrar: 0 };
+    const c = { all: inLevel.length, yeni: 0, bildim: 0, karistirdim: 0, tekrar: 0 };
     inLevel.forEach(w => {
       const s = state.status[w.id];
-      if (s) c[s]++;
+      if (s) c[s]++; else c.yeni++;
     });
     return c;
   }
@@ -7256,7 +7258,7 @@
     card.dataset.flipped = state.flipped ? "true" : "false";
 
     if (!w){
-      front.innerHTML = `<div class="fc-empty">Bu destede kart yok. Farklı bir seviye, durum ya da arama terimi seç.</div>`;
+      front.innerHTML = `<div class="fc-empty">${state.statusFilter === "yeni" ? "Bu seviyede işaretlemediğin kelime kalmadı 🎉 Diğer sekmelerden tekrar yapabilir ya da başka bir seviyeye geçebilirsin." : "Bu destede kart yok. Farklı bir seviye, durum ya da arama terimi seç."}</div>`;
       back.innerHTML = "";
       document.getElementById("fcCount").textContent = "";
       return;
